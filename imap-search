@@ -12,7 +12,7 @@ parser.add_argument("-u", metavar="USER", default=None, required=False, dest="us
 args = parser.parse_args()
 
 args.term = args.term.split("/")
-print(args.term)
+
 if not args.srv:
 	print("Server: ", file=sys.stderr, end="")
 	args.srv = input()
