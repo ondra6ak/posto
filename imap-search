@@ -1,0 +1,34 @@
+#!/usr/bin/python3
+
+import argparse
+import posto.imap
+import sys
+import getpass
+
+parser = argparse.ArgumentParser()
+parser.add_argument("term", metavar="FOLDER/TERM")
+parser.add_argument("-s", metavar="SERVER", default=None, required=False, dest="srv")
+parser.add_argument("-u", metavar="USER", default=None, required=False, dest="usr")
+args = parser.parse_args()
+
+args.term = args.term.split("/")
+print(args.term)
+if not args.srv:
+	print("Server: ", file=sys.stderr, end="")
+	args.srv = input()
+
+args.srv = args.srv.split(":")
+if len(args.srv) == 1:
+	args.srv.append(993)
+
+if not args.usr:
+	print("User: ", file=sys.stderr, end="")
+	args.usr = input()
+
+passwd = getpass.getpass()
+
+mail = posto.imap.Mail(args.srv[0], args.usr, passwd, port=args.srv[1])
+mail.select(args.term[0])
+
+for m in mail.search(args.term[1]):
+	print(m)
