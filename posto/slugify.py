@@ -22,4 +22,4 @@ def slugify(string):
 
     """
 
-    return re.sub(r'[-\s]+', '_', re.sub(r'[^\w\s-]', '',                unicodedata.normalize('NFKD', string).encode('ascii', 'ignore').decode("ascii")).strip().lower())
+    return re.sub(r'[-\s]+', '_', re.sub(r'[^\._\w\s-]', '',                unicodedata.normalize('NFKD', string).encode('ascii', 'ignore').decode("ascii")).strip().lower())

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+MAIL_DIR=~/mail
+
+for account in $(ls $MAIL_DIR)
+do
+	if [ -s $MAIL_DIR/$account/config.imap ]
+	then
+		for mbox in $(cat $MAIL_DIR/$account/config.imap | tail -1)
+		do
+			mkdir -p $MAIL_DIR/$account/$mbox
+
+			for uid in $(cat $MAIL_DIR/$account/config.imap | head -3 | ./imap-search $mbox/ALL)
+			do
+				if [ ! -s $MAIL_DIR/$account/$mbox/$uid ]
+				then
+					echo $MAIL_DIR/$account/$mbox/$uid
+					cat $MAIL_DIR/$account/config.imap | head -3 | ./imap-fetch -o $MAIL_DIR/$account/$mbox/$uid -a $MAIL_DIR/$account/$mbox/attachments/$uid $mbox/$uid
+				fi
+			done
+		done
+	fi
+done

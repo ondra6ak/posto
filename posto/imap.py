@@ -4,7 +4,7 @@ import io
 import re
 import os
 from . import imap_utf7
-from . import slugify
+from .slugify import slugify
 from . import *
 
 def init(host, user, password, port=993):
@@ -18,20 +18,20 @@ def ls(mail):
 		raise Exception(data[0].decode("ascii"))
 	
 	ret = {}
-	for folder in data:
-		folder = imap_utf7.decode(folder).split("\"")
-		folder.remove(" ")
-		folder.remove("")
-		sf = re.sub(r"\\HasChildren|\\HasNoChildren|[\(\)\\]", "", folder[0]).strip()
+	for mbox in data:
+		mbox = imap_utf7.decode(mbox).split("\"")
+		mbox.remove(" ")
+		mbox.remove("")
+		sf = re.sub(r"\\HasChildren|\\HasNoChildren|[\(\)\\]", "", mbox[0]).strip()
 		if sf:
-			ret[slugify.slugify(sf)] = folder[2]
+			ret[slugify(sf)] = mbox[2]
 		else:
-			ret[slugify.slugify(folder[2])] = folder[2]
+			ret[slugify(mbox[2])] = mbox[2]
 
 	return ret
 
-def select(mail, folder):
-	result, data = mail.select(imap_utf7.encode("\"{}\"".format(folder)))
+def select(mail, mbox):
+	result, data = mail.select(imap_utf7.encode("\"{}\"".format(mbox)))
 	if result != "OK":
 		raise Exception("{}".format(data[0].decode("ascii")))
 
@@ -56,40 +56,28 @@ def fetch(mail, uid, rfc="(RFC822)"):
 		raise Exception(data[0].decode("ascii"))
 
 	msg = email.message_from_bytes(data[0][1])
-	return msg_parse(msg)
+	return msg_shape(msg)
 
 def logout(mail):
 	result, data = mail.logout()
 	if result != "BYE":
 		raise Exception(data[0].decode("ascii"))
 
-def write(msg, outf, attachments):
-	outf.write("From: {From}\nTo: {To}\nCc: {Cc}\nDate: {Date}\nSubject: {Subject}\n\n".format(**msg[0]))
-	outf.write(msg[1])
-
-	if msg[2]:
-		outf.write("\nAttachments:")
-		for f in msg[2].keys():
-			attachments = os.path.join(attachments, f)
-			outf.write(" ~/{}".format(os.path.relpath(attachments, start=os.environ["HOME"])))
-			open(os.path.join(attachments), "wb").write(msg[2][f].read())
-	outf.write("\n")
-
 class Mail:
 	def __init__(self, host, user, password, port=993):
 		self.mail = init(host, user, password, port=port)
-		self.folders = ls(self.mail)
+		self.mboxes = ls(self.mail)
 
 	def __del__(self):
 		close(self.mail)
 		logout(self.mail)
 
 	def ls(self):
-		return list(self.folders.keys())
+		return list(self.mboxes.keys())
 
-	def select(self, folder):
+	def select(self, mbox):
 		close(self.mail)
-		select(self.mail, self.folders[folder])
+		select(self.mail, self.mboxes[mbox])
 
 	def search(self, term="ALL"):
 		return search(self.mail, term=term)

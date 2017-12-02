@@ -3,10 +3,10 @@
 import argparse
 import posto.imap
 import sys
-import getpass
+import os
 
 parser = argparse.ArgumentParser()
-parser.add_argument("term", metavar="FOLDER/TERM")
+parser.add_argument("term", metavar="MBOX/TERM")
 parser.add_argument("-s", metavar="SERVER", default=None, required=False, dest="srv")
 parser.add_argument("-u", metavar="USER", default=None, required=False, dest="usr")
 args = parser.parse_args()
@@ -25,7 +25,10 @@ if not args.usr:
 	print("User: ", file=sys.stderr, end="")
 	args.usr = input()
 
-passwd = getpass.getpass()
+print("Password: ", file=sys.stderr, end="")
+os.system("stty -echo")
+passwd = input()
+os.system("stty echo")
 
 mail = posto.imap.Mail(args.srv[0], args.usr, passwd, port=args.srv[1])
 mail.select(args.term[0])

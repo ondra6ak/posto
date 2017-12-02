@@ -2,16 +2,15 @@
 
 import posto.imap
 import argparse
-import getpass
 import sys
 import os
 
 parser = argparse.ArgumentParser()
-parser.add_argument("uid", metavar="FOLDER/UID")
+parser.add_argument("uid", metavar="MBOX/UID")
 parser.add_argument("-s", metavar="SERVER", default=None, required=False, dest="srv")
 parser.add_argument("-u", metavar="USER", default=None, required=False, dest="usr")
 parser.add_argument("-o", metavar="FILE", default="/dev/stdout", required=False, dest="out")
-parser.add_argument("-a", metavar="DIR", default=os.path.join(os.environ["HOME"], "mail/attachments/"), required=False, dest="attachments")
+parser.add_argument("-a", metavar="DIR", default=os.path.abspath("."), required=False, dest="attachments")
 args = parser.parse_args()
 
 args.uid = args.uid.split("/")
@@ -28,14 +27,15 @@ if not args.usr:
 	print("User: ", file=sys.stderr, end="")
 	args.usr = input()
 
-passwd = getpass.getpass()
+print("Password: ", file=sys.stderr, end="")
+os.system("stty -echo")
+passwd = input()
+os.system("stty echo")
 
 outf = open(args.out, "w")
 
 mail = posto.imap.Mail(args.srv[0], args.usr, passwd, port=args.srv[1])
 mail.select(args.uid[0])
 msg = mail.fetch(args.uid[1])
-args.attachments = os.path.join(args.attachments, args.usr, args.uid[1])
-os.makedirs(args.attachments, exist_ok=True)
-posto.imap.write(msg, outf, args.attachments)
+posto.msg_dump(msg, outf, args.attachments)
 outf.close()
